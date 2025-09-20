@@ -1,0 +1,2 @@
+# find_load_module-tool
+本工具用于在无Linux内核源码的情况下，查找出内核函数load_module的位置，确保在无内核源码的情况下，顺利去除所有加载驱动的验证，此工具适用于所有Linux ARM64内核

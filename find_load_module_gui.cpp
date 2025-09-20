@@ -41,7 +41,7 @@ struct AppUI {
 };
 
 static AppUI g_ui;
-static std::wstring g_lastOffset; // 仅复制偏移量
+static std::wstring g_lastOffset;
 static volatile LONG g_statusState = 0; // 0 idle, 1 working, 2 done
 
 static void AppendText(HWND hEdit, const std::wstring& t) {
@@ -59,7 +59,7 @@ static void StopMarquee(HWND hProgress) {
 }
 
 static void SetProgressDoneGreen(HWND hProgress) {
-    // 填满并设置绿色完成状态
+    
     SendMessageW(hProgress, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
     SendMessageW(hProgress, PBM_SETPOS, 100, 0);
     SendMessageW(hProgress, PBM_SETSTATE, PBST_NORMAL, 0);
@@ -84,7 +84,6 @@ static DWORD WINAPI WorkerThread(LPVOID lp) {
 		return 0;
 	}
     ws << L"文件大小: " << (unsigned long long)buf.size() << L" 字节\r\n";
-    // 版本检测，5/6 开头直接返回无签名特征
     {
         KernelVersionParser ver(buf);
         std::string verStr = ver.find_kernel_versions();
@@ -183,14 +182,14 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_CREATE: {
 		g_ui.hwnd = hwnd;
 		InitCommonControls();
-		g_headerBrush = CreateSolidBrush(RGB(33,150,243)); // 蓝色主题
+		g_headerBrush = CreateSolidBrush(RGB(33,150,243)); 
 		DragAcceptFiles(hwnd, TRUE);
-		// 微软雅黑字体
+		
 		g_ui.hFont = CreateFontW(
 			-16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 			DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
 			DEFAULT_PITCH | FF_SWISS, L"Microsoft YaHei");
-		// 控件布局更自然
+
 		g_ui.hBtnOpen = CreateWindowW(L"BUTTON", L"选择文件", WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
 			10, 58, 90, 28, hwnd, (HMENU)1, GetModuleHandleW(nullptr), nullptr);
 		g_ui.hBtnCopy = CreateWindowW(L"BUTTON", L"复制偏移量", WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
@@ -225,7 +224,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 		DrawTextW(hdc, title, -1, &hdr, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
 		return 1;
 	}
-    // 移除状态标签的着色处理
+   
     case WM_DRAWITEM: {
         LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT)lParam;
         if (dis->hwndItem == g_ui.hBtnOpen || dis->hwndItem == g_ui.hBtnCopy) {
@@ -233,15 +232,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             RECT rc = dis->rcItem;
             BOOL disabled = (dis->itemState & ODS_DISABLED);
             BOOL pressed = (dis->itemState & ODS_SELECTED);
-            // 背景清理
             HBRUSH bg = (HBRUSH)(COLOR_WINDOW + 1);
             FillRect(hdc, &rc, bg);
-            // 阴影（浅灰，右下角偏移）
             RECT rShadow = rc; OffsetRect(&rShadow, 2, 2);
             HBRUSH hShadow = CreateSolidBrush(RGB(220,220,220));
             RoundRect(hdc, rShadow.left, rShadow.top, rShadow.right, rShadow.bottom, 12, 12);
             DeleteObject(hShadow);
-            // 主按钮
             COLORREF btnColor = disabled ? RGB(180, 180, 180) : RGB(33,150,243);
             HBRUSH hBtn = CreateSolidBrush(btnColor);
             HPEN hPen = CreatePen(PS_SOLID, 1, disabled ? RGB(200,200,200) : RGB(20,130,220));
@@ -251,7 +247,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             RoundRect(hdc, rBtn.left, rBtn.top, rBtn.right, rBtn.bottom, 12, 12);
             SelectObject(hdc, oldB); DeleteObject(hBtn);
             SelectObject(hdc, oldP); DeleteObject(hPen);
-            // 文本
             SetBkMode(hdc, TRANSPARENT);
             SetTextColor(hdc, RGB(255,255,255));
             wchar_t text[64] = {0};
@@ -278,7 +273,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 		SetProgressDoneGreen(g_ui.hProgress);
 		WorkResult* res = (WorkResult*)lParam;
 		AppendText(g_ui.hEdit, res->text);
-		// 不再追加“查找已完成”，以更自然简洁
 		g_lastOffset = res->offsetHex;
 		delete res;
 		return 0;
@@ -310,7 +304,6 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
 	ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
 
-	// 启动时检测命令行参数（拖拽到 exe 场景），自动解析
 	int wargc = 0;
 	LPWSTR* wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
 	if (wargv && wargc >= 2) {

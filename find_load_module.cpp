@@ -36,7 +36,6 @@ static void set_color(WORD attr) {
 	}
 }
 
-// 文件选择对话框已禁用：仅支持拖拽/命令行
 
 static void print_w(const wchar_t* text) {
 #ifdef _WIN32
@@ -83,7 +82,6 @@ int main(int argc, char* argv[]) {
         wpath = wargv[1];
         LocalFree(wargv);
     }
-    // 兼容某些场景仅 argv[1] 有值的情况（拖拽/快捷方式传参异常）
     if (wpath.empty() && argc >= 2 && argv[1] && argv[1][0] != '\0') {
         int need = MultiByteToWideChar(CP_ACP, 0, argv[1], -1, nullptr, 0);
         if (need > 0) {
@@ -107,7 +105,6 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 	
-    // 参数校验（拒绝 .img）
 #ifdef _WIN32
     if (!wpath.empty()) {
         if (wpath.size() >= 4 && _wcsicmp(wpath.c_str() + (wpath.size() - 4), L".img") == 0) {
@@ -139,14 +136,12 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-    // 显示文件大小与进度提示
 #ifdef _WIN32
     {
         std::wostringstream woss;
         woss << L"文件大小: " << (unsigned long long)file_buf.size() << L" 字节";
         print_w(woss.str().c_str());
     }
-    // 内核版本检测，5.x/6.x 不扫描，直接提示
     {
         KernelVersionParser ver(file_buf);
         std::string verStr = ver.find_kernel_versions();
